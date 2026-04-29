@@ -7,4 +7,61 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(rvest)
+install.packages("Lahman")
 library(Lahman)
+```
+
+# Data Background
+
+The Lahman package contains historical Hall of Fame data, including some data for 2026.
+
+I will compare my scraped data with the Lahman dataset to see what matches and what is different.
+
+# Data Source
+
+I am using Baseball Reference to scrape Hall of Fame 2026 data.
+
+Link: https://www.baseball-reference.com/awards/hof_2026.shtml
+
+```{r}
+# Scrape the data
+
+url <- "https://www.baseball-reference.com/awards/hof_2026.shtml"
+page <- read_html(url)
+tables <- page %>% html_table(fill = TRUE)
+tables
+```
+
+```{r}
+tables[[1]]
+tables[[2]]
+```
+
+```{r}
+# Step 3: Select correct table
+hof_data <- tables[[2]]
+head(hof_data)
+```
+
+# Observations
+- The webpage returned multiple tables.
+- The first table is not relevant for Hall of Fame voting.
+- The second table (tables[[2]]) contains the Hall of Fame voting data.
+- This table includes player names, votes, and percentage of votes.
+
+```{r}
+# Step 4: Compare with Lahman data
+
+lahman_data <- HallOfFame %>%
+  filter(yearID == 2026)
+
+lahman_data
+```
+
+# Comparison
+- The Lahman dataset has fewer rows compared to the scraped data.
+- Lahman includes official voting records, while the scraped data includes the full ballot.
+- The variables are different between the two datasets.
+- This explains why the datasets do not match exactly.
+
+
