@@ -101,4 +101,8 @@ head(hof_2026)
 write_csv(hof_2026, "HallOfFame_2026.csv")
 ```
 
-- Finally, I exported the csv.
+- Key Findings:
+
+Overall, the scraped dataset and the Lahman dataset do not match exactly in both size and structure. The scraped dataset contains 27 candidates from the 2026 Hall of Fame ballot, with 2 candidates meeting the 75% threshold for induction and 25 not inducted. In contrast, the Lahman dataset contains only 8 records for 2026, with 1 inducted and 7 not inducted.
+
+This difference occurs because the scraped data from Baseball Reference includes the full ballot with all candidates and their vote totals, while the Lahman dataset stores official Hall of Fame voting records organized by voting groups. As a result, the scraped dataset provides more detailed, candidate-level information, while the Lahman dataset presents a more summarized version of the voting results.
