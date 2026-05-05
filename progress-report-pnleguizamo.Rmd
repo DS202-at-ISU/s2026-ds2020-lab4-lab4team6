@@ -1,0 +1,88 @@
+---
+title: "Progress Report"
+author: "Pablo Leguizamo"
+date: "2026-5-4"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(rvest)
+library(readr)
+library(Lahman)
+```
+
+# Data Source
+
+I am using Baseball Reference to scrape the 2026 Hall of Fame voting data.
+
+Link: https://www.baseball-reference.com/awards/hof_2026.shtml
+
+```{r}
+url <- "https://www.baseball-reference.com/awards/hof_2026.shtml"
+html <- read_html(url)
+tables <- html_table(html)
+length(tables)
+```
+
+```{r}
+data <- tables[[1]]
+head(data)
+```
+
+- The webpage had more than one table.
+- The first table has the BBWAA Hall of Fame voting results.
+- The names of the columns were in the first row, so I fixed the column names.
+
+```{r}
+actual_col_names <- data[1, ]
+colnames(data) <- actual_col_names
+data <- data[-1, ]
+
+head(data)
+```
+
+# Clean Data
+
+I cleaned the names, changed votes to numbers, and kept the columns I needed.
+
+```{r}
+head(HallOfFame, 3)
+```
+
+```{r}
+data$Name <- gsub("HOF", "", data$Name)
+data$Name <- gsub("X-", "", data$Name)
+data$Name <- trimws(data$Name)
+data$Name <- iconv(data$Name, from = "UTF-8", to = "ASCII//TRANSLIT")
+data$Name <- trimws(data$Name)
+data$Votes <- as.numeric(data$Votes)
+data$percent_vote <- readr::parse_number(data$`%vote`)
+
+data$yearID <- 2026
+data$inducted <- ifelse(data$percent_vote >= 75, "Y", "N")
+
+hof_2026 <- data.frame(
+  Name = data$Name,
+  yearID = data$yearID,
+  Votes = data$Votes,
+  percent_vote = data$percent_vote,
+  inducted = data$inducted
+)
+
+head(hof_2026, 3)
+```
+
+# Comparison
+
+```{r}
+lahman_2026 <- HallOfFame[HallOfFame$yearID == 2026, ]
+lahman_2026
+```
+
+- The scraped data has the full BBWAA ballot from Baseball Reference.
+- Lahman is organized differently and uses player IDs.
+- My data keeps the name, year, votes, percent vote, and inducted result.
