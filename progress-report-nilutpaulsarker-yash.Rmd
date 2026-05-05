@@ -9,4 +9,100 @@ date: "2026-04-29"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+
+```{r}
+library(rvest)
+library(dplyr)
+library(readr)
+library(Lahman)
+```
+
+
+```{r}
+url <- "https://www.baseball-reference.com/awards/hof_2026.shtml"
+html <- read_html(url)
+tables <- html_table(html)
+length(tables)
+#tables[[1]]
+data <- tables[[1]]
+```
+
+- The Baseball page contained multiple tables. Since the first table contains the 2026 Hall of Fame voting data, I selected it.
+
+```{r}
+actual_col_names <- data[1, ]
+colnames(data) <- actual_col_names
+data <- data[-1, ]
+head(data)
+```
+
+- The column names were stored in the first row of the table, so I reassigned the column names and removed that row to properly organize the structure of the dataset.
+
+```{r}
+hof_2026 <- data %>%
+  select(Name, Votes, `%vote`) %>%
+  mutate(
+    yearID = 2026,
+    Votes = as.numeric(Votes),
+    percent_vote = parse_number(`%vote`),
+    inducted = ifelse(percent_vote >= 75, "Y", "N")
+  )
+
+hof_2026$Name <- gsub("X-", "", hof_2026$Name)
+head(hof_2026)
+```
+
+- I selected the relevant variables and cleaned the dataset by converting votes and percentage values into numeric format. I also created a new variable called inducted based on whether a candidate received at least 75% of the vote.
+
+
+```{r}
+lahman_2026 <- HallOfFame %>%
+  filter(yearID == 2026)
+
+# Count inducted from your scraped data
+hof_2026 %>% count(inducted)
+
+# Count from Lahman
+lahman_2026 %>% count(votedBy, inducted)
+```
+
+- The scraped data and Lahman data do not fully match each other. The scraped dataset contains the full ballot, while the Lahman dataset stores official voting records in a different format. As a result, we have fewer observations.
+
+```{r}
+glimpse(hof_2026)
+
+summary(hof_2026)
+
+hof_2026 <- hof_2026 %>%
+  select(-`%vote`)
+
+glimpse(hof_2026)
+```
+
+- I removed the original percent vote column because it was stored as a character variable and replaced it with a cleaned numeric version.
+
+```{r}
+hof_2026 <- hof_2026 %>%
+  select(Name, yearID, Votes, percent_vote, inducted)
+
+glimpse(hof_2026)
+```
+
+- I reordered the columns to match the required structure of the dataset, including name, year, votes, percentage of votes, and induction status.
+
+```{r}
+hof_2026$Name <- iconv(hof_2026$Name, from = "UTF-8", to = "ASCII//TRANSLIT")
+head(hof_2026)
+```
+
+- I fixed encoding issues in the names to ensure they display correctly when exported to a CSV file.
+
+```{r}
+write_csv(hof_2026, "HallOfFame_2026.csv")
+```
+
+- Key Findings:
+
+Overall, the scraped dataset and the Lahman dataset do not match exactly in both size and structure. The scraped dataset contains 27 candidates from the 2026 Hall of Fame ballot, with 2 candidates meeting the 75% threshold for induction and 25 not inducted. In contrast, the Lahman dataset contains only 8 records for 2026, with 1 inducted and 7 not inducted.
+
+This difference occurs because the scraped data from Baseball Reference includes the full ballot with all candidates and their vote totals, while the Lahman dataset stores official Hall of Fame voting records organized by voting groups. As a result, the scraped dataset provides more detailed, candidate-level information, while the Lahman dataset presents a more summarized version of the voting results.
