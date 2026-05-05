@@ -1,0 +1,54 @@
+---
+title: "progress-report-Nickh05"
+output: html_document
+---
+
+```{R}
+library(Lahman)
+library(rvest)
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+
+NewHallOfFame = HallOfFame %>%
+  filter(yearID == 2026)
+view(NewHallOfFame)
+
+url <- "https://www.baseball-reference.com/awards/hof_2026.shtml"
+html <- read_html(url)
+tables <- html_table(html)
+view(tables)
+
+data <- tables[[1]]
+actual_col_names <- data[1, ]
+colnames(data) <- actual_col_names
+data <- data[-1, ]
+view(data)
+
+hof_2026 <- data %>%
+  select(Name, Votes, `%vote`) %>%
+  mutate(
+    yearID = 2026,
+    Votes = as.numeric(Votes),
+    percent_vote = parse_number(`%vote`),
+    inducted = ifelse(percent_vote >= 75, "Y", "N")
+  )
+
+hof_2026$Name <- gsub("X-", "", hof_2026$Name)
+head(hof_2026)
+
+lahman_2026 <- HallOfFame %>%
+  filter(yearID == 2026)
+
+hof_2026 %>% count(inducted)
+lahman_2026 %>% count(votedBy, inducted)
+
+hof_2026 <- hof_2026 %>%
+  select(-`%vote`)
+
+hof_2026 <- hof_2026 %>%
+  select(Name, yearID, Votes, percent_vote, inducted)
+
+hof_2026$Name <- iconv(hof_2026$Name, from = "UTF-8", to = "ASCII//TRANSLIT")
+View(hof_2026)
+```
